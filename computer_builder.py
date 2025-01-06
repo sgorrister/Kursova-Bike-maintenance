@@ -1,7 +1,7 @@
-import csv
+import sqlite3
 
 class CPU:
-    def __init__(self, brand, model, series, generation, socket_type, cores, frequency, cache):
+    def __init__(self, brand, model, series, generation, socket_type, cores, frequency, cache, power_consumption):
         self.brand = brand
         self.model = model
         self.series = series
@@ -10,23 +10,26 @@ class CPU:
         self.cores = cores
         self.frequency = frequency  # in GHz
         self.cache = cache  # in MB
+        self.power_consumption = power_consumption  # in Watts
 
 class Motherboard:
-    def __init__(self, brand, model, socket_type, chipset, ram_slots, pcie_version):
+    def __init__(self, brand, model, socket_type, chipset, ram_slots, pcie_version, power_consumption):
         self.brand = brand
         self.model = model
         self.socket_type = socket_type
         self.chipset = chipset
         self.ram_slots = ram_slots
         self.pcie_version = pcie_version
+        self.power_consumption = power_consumption  # in Watts
 
 class RAM:
-    def __init__(self, brand, model, memory_type, size, frequency):
+    def __init__(self, brand, model, memory_type, size, frequency, power_consumption):
         self.brand = brand
         self.model = model
         self.memory_type = memory_type
         self.size = size  # in GB
         self.frequency = frequency  # in MHz
+        self.power_consumption = power_consumption  # in Watts
 
 class GPU:
     def __init__(self, brand, model, vram, power_consumption, frequency):
@@ -37,35 +40,39 @@ class GPU:
         self.frequency = frequency  # in MHz
 
 class Storage:
-    def __init__(self, brand, model, storage_type, size, interface):
+    def __init__(self, brand, model, storage_type, size, interface, power_consumption):
         self.brand = brand
         self.model = model
         self.storage_type = storage_type
         self.size = size  # in GB or TB
         self.interface = interface
+        self.power_consumption = power_consumption  # in Watts
 
 class PSU:
-    def __init__(self, brand, model, wattage, certification):
+    def __init__(self, brand, model, wattage, certification, power_consumption):
         self.brand = brand
         self.model = model
         self.wattage = wattage  # in Watts
         self.certification = certification
+        self.power_consumption = power_consumption  # in Watts
 
 class Case:
-    def __init__(self, brand, model, form_factor):
+    def __init__(self, brand, model, form_factor, power_consumption):
         self.brand = brand
         self.model = model
         self.form_factor = form_factor
+        self.power_consumption = power_consumption  # in Watts
 
 class Cooling:
-    def __init__(self, brand, model, cooling_type, size):
+    def __init__(self, brand, model, cooling_type, size, power_consumption):
         self.brand = brand
         self.model = model
         self.cooling_type = cooling_type
         self.size = size  # in mm
+        self.power_consumption = power_consumption  # in Watts
 
 class ComponentDatabase:
-    def __init__(self, csv_file):
+    def __init__(self, db_file):
         self.components = {
             'CPU': [],
             'Motherboard': [],
@@ -76,42 +83,70 @@ class ComponentDatabase:
             'Case': [],
             'Cooling': []
         }
-        self.populate_database(csv_file)
+        self.populate_database(db_file)
 
-    def populate_database(self, csv_file):
-        with open(csv_file, mode='r') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                if row['Type'] == 'CPU':
-                    self.components['CPU'].append(CPU(row['Brand'], row['Model'], row['Series'], row['Generation'], row['Socket'], int(row['Cores']), float(row['Frequency']), int(row['Cache'])))
-                elif row['Type'] == 'Motherboard':
-                    self.components['Motherboard'].append(Motherboard(row['Brand'], row['Model'], row['Socket'], row.get('Chipset', 'N/A'), int(row.get('RAMSlots', 0)), row.get('PCIeVersion', 'N/A')))
-                elif row['Type'] == 'RAM':
-                    self.components['RAM'].append(RAM(row['Brand'], row['Model'], row.get('MemoryType', 'N/A'), int(row['Size']), int(row['Frequency'])))
-                elif row['Type'] == 'GPU':
-                    self.components['GPU'].append(GPU(row['Brand'], row['Model'], int(row['VRAM']), int(row['PowerConsumption']), int(row['Frequency'])))
-                elif row['Type'] == 'Storage':
-                    self.components['Storage'].append(Storage(row['Brand'], row['Model'], row.get('StorageType', 'N/A'), int(row['Size']) if row['Size'].isdigit() else 0, row['Interface']))
-                elif row['Type'] == 'PSU':
-                    self.components['PSU'].append(PSU(row['Brand'], row['Model'], int(row.get('Wattage', 0)), row.get('Certification', 'N/A')))
-                elif row['Type'] == 'Case':
-                    self.components['Case'].append(Case(row['Brand'], row['Model'], row.get('FormFactor', 'N/A')))
-                elif row['Type'] == 'Cooling':
-                    self.components['Cooling'].append(Cooling(row['Brand'], row['Model'], row.get('CoolingType', 'N/A'), int(row['Size'])))
+    def populate_database(self, db_file):
+        conn = sqlite3.connect(db_file)
+        cursor = conn.cursor()
+
+        # Load CPU data
+        cursor.execute("SELECT * FROM CPU")
+        for row in cursor.fetchall():
+            self.components['CPU'].append(CPU(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9]))
+
+        # Load Motherboard data
+        cursor.execute("SELECT * FROM Motherboard")
+        for row in cursor.fetchall():
+            self.components['Motherboard'].append(Motherboard(row[1], row[2], row[3], row[4], row[5], row[6], row[7]))
+
+        # Load RAM data
+        cursor.execute("SELECT * FROM RAM")
+        for row in cursor.fetchall():
+            self.components['RAM'].append(RAM(row[1], row[2], row[3], row[4], row[5], row[6]))
+
+        # Load GPU data
+        cursor.execute("SELECT * FROM GPU")
+        for row in cursor.fetchall():
+            self.components['GPU'].append(GPU(row[1], row[2], row[3], row[4], row[5]))
+
+        # Load Storage data
+        cursor.execute("SELECT * FROM Storage")
+        for row in cursor.fetchall():
+            self.components['Storage'].append(Storage(row[1], row[2], row[3], row[4], row[5], row[6]))
+
+        # Load PSU data
+        # Load PSU data
+        cursor.execute("SELECT * FROM PSU")
+        for row in cursor.fetchall():
+            try:
+                brand = row[1]
+                model = row[2]
+                wattage = int(row[3]) if len(row) > 3 and row[3] else 0
+                certification = row[4] if len(row) > 4 else "Unknown"
+                power_consumption = int(row[5]) if len(row) > 5 and row[5] else 0
+                self.components['PSU'].append(PSU(brand, model, wattage, certification, power_consumption))
+            except IndexError as e:
+                print(f"Error processing row {row}: {e}")
+
+        # Load Case data
+        cursor.execute("SELECT * FROM ComputerCase")
+        for row in cursor.fetchall():
+            self.components['Case'].append(Case(row[1], row[2], row[3], row[4]))
+
+        # Load Cooling data
+        cursor.execute("SELECT * FROM Cooling")
+        for row in cursor.fetchall():
+            self.components['Cooling'].append(Cooling(row[1], row[2], row[3], row[4], row[5]))
+
+        conn.close()
 
     def get_components(self, component_type):
         return self.components.get(component_type, [])
 
-    def print_components(self):
-        for component_type, components in self.components.items():
-            print(f"{component_type}:")
-            for component in components:
-                print(f"  - {component.__dict__}")
-
 class ComputerBuilder:
     def __init__(self):
         self.components = {}
-        self.database = ComponentDatabase('components.csv')
+        self.database = ComponentDatabase('computer_components.db')
 
     def add_component(self, component_type, component):
         self.components[component_type] = component
@@ -168,7 +203,6 @@ if __name__ == "__main__":
     builder.add_component('Case', case)
     builder.add_component('Cooling', cooling)
 
-    builder.database.print_components()  # Print all components for debugging
     print(builder.visualize_build())
     print(builder.check_compatibility())
     print(f"Total Power Requirement: {builder.calculate_power()}W")

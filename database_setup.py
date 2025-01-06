@@ -72,7 +72,7 @@ def create_database():
     )
     ''')
 
-    # Create PSU table
+    # Create PSU table without power_consumption
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS PSU (
         id INTEGER PRIMARY KEY,
@@ -83,9 +83,9 @@ def create_database():
     )
     ''')
 
-    # Create Case table
+    # Create ComputerCase table
     cursor.execute('''
-    CREATE TABLE IF NOT EXISTS Case (
+    CREATE TABLE IF NOT EXISTS ComputerCase (
         id INTEGER PRIMARY KEY,
         brand TEXT,
         model TEXT,
