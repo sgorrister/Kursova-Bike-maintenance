@@ -1,0 +1,9 @@
+Type,Brand,Model,Series,Generation,Socket,Cores,Frequency,Cache,VRAM,PowerConsumption,Size,Interface
+CPU,Intel,Core i5,Core i5,13th Gen,LGA1700,6,3.5,12,0,0,0,0
+Motherboard,ASUS,ROG Strix Z790,ROG Strix Z790,0,LGA1700,0,0,0,0,0,0,0
+RAM,Corsair,Vengeance LPX,LPX,0,0,0,3200,0,0,16,0,0
+GPU,NVIDIA,RTX 4060,RTX 4060,0,0,0,1800,8,300,0,0,0
+Storage,Samsung,970 EVO,970 EVO,0,0,0,0,0,0,1,SSD,M.2
+PSU,Corsair,RMX Series,RMX,0,0,0,0,0,750,0,0,0
+Case,Fractal Design,Meshify C,Meshify C,0,0,0,0,0,0,0,0,0
+Cooling,Cooler Master,Hyper 212,Hyper 212,0,0,0,0,0,0,0,0,240
