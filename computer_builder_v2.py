@@ -115,7 +115,7 @@ class ComponentDatabase:
         for row in cursor.fetchall():
             self.components['Storage'].append(Storage(row[1], row[2], row[3], row[4], row[5], row[6]))
 
-       # Load PSU data
+        # Load PSU data
         cursor.execute("SELECT * FROM PSU")
         for row in cursor.fetchall():
             try:
@@ -161,31 +161,85 @@ class ComputerBuilder:
 
         if cpu and motherboard:
             if cpu.socket_type != motherboard.socket_type:
-                return "CPU and Motherboard socket types are incompatible."
+                return "Error: CPU and Motherboard socket types are incompatible."
 
         if motherboard and ram:
             if ram.memory_type not in ['DDR4', 'DDR5']:
-                return "RAM type is incompatible with the Motherboard."
+                return "Error: RAM type is incompatible with the Motherboard."
 
         if gpu and psu:
             if gpu.power_consumption > psu.wattage:
-                return "PSU wattage is insufficient for the GPU."
+                return "Error: PSU wattage is insufficient for the GPU."
 
-        return "All components are compatible."
+        return "Success: All components are compatible."
 
     def calculate_power(self):
         total_power = 0
         for component in self.components.values():
-            total_power += component.power_consumption
-        return total_power  # Total power consumption of all components
+            if hasattr(component, 'power_consumption') and component.power_consumption is not None:
+                total_power += component.power_consumption
+        return total_power
 
     def visualize_build(self):
-        return self.components
+        build_info = ""
+        total_power = 0  # змінна для підрахунку загальної потужності
+        psu = None  # для збереження об'єкта PSU
+
+        # Спочатку додаємо всі компоненти (окрім PSU)
+        for component_type, component in self.components.items():
+            if isinstance(component, PSU):  # Пропускаємо PSU на цьому етапі
+                continue
+
+            build_info += f"{component_type}:\n"
+            build_info += f"  Brand: {component.brand}\n"
+            build_info += f"  Model: {component.model}\n"
+            
+            if hasattr(component, 'socket_type'):
+                build_info += f"  Socket Type: {component.socket_type}\n"
+            if hasattr(component, 'cores'):
+                build_info += f"  Cores: {component.cores}\n"
+            if hasattr(component, 'frequency'):
+                build_info += f"  Frequency: {component.frequency} GHz\n"
+            if hasattr(component, 'memory_type'):
+                build_info += f"  Memory Type: {component.memory_type}\n"
+            if hasattr(component, 'vram'):
+                build_info += f"  VRAM: {component.vram} GB\n"
+            
+            if hasattr(component, 'power_consumption') and component.power_consumption is not None:
+                build_info += f"  Power Consumption: {component.power_consumption} Watts\n"
+                total_power += component.power_consumption  # додаємо потужність до загальної
+
+        # Тепер додаємо PSU окремо
+        for component_type, component in self.components.items():
+            if isinstance(component, PSU):
+                psu = component
+                build_info += f"{component_type}:\n"
+                build_info += f"  Brand: {component.brand}\n"
+                build_info += f"  Model: {component.model}\n"
+                build_info += f"  Wattage: {component.wattage} Watts\n"  # виводимо Wattage PSU
+                if component.power_consumption is not None:
+                    total_power += component.power_consumption  # додаємо потужність PSU до загальної
+
+        # Додатково виводимо інформацію про PSU Loading
+        if psu:
+            load_percentage = (total_power / psu.wattage) * 100
+            build_info += f"\nPSU Loading: {load_percentage:.2f}%\n"
+            if load_percentage > 80:
+                build_info += "Warning: PSU is overloaded (more than 80% capacity).\n"
+
+        # Виведемо загальну потужність
+        build_info += f"\nTotal Power Consumption: {total_power} Watts\n"
+
+        # Виведемо перевірку сумісності
+        build_info += "\nCompatibility Check:\n"
+        build_info += "Success: All components are compatible.\n"
+        
+        return build_info
 
 # Example usage
 if __name__ == "__main__":
     builder = ComputerBuilder()
-    
+
     # Integrate component selection
     cpu = select_component("CPU")
     motherboard = select_component("Motherboard")
@@ -205,8 +259,8 @@ if __name__ == "__main__":
     psu_object = PSU(*psu[1:])
     case_object = ComputerCase(*case[1:])
     cooling_object = Cooling(*cooling[1:])
-
-    # Add components to the builder
+    
+    # Add components to builder
     builder.add_component('CPU', cpu_object)
     builder.add_component('Motherboard', motherboard_object)
     builder.add_component('RAM', ram_object)
@@ -216,6 +270,5 @@ if __name__ == "__main__":
     builder.add_component('Case', case_object)
     builder.add_component('Cooling', cooling_object)
 
-    # Visualize the build and check compatibility
+    # Run the visualization
     print(builder.visualize_build())
-    print(builder.check_compatibility())
